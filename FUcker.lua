@@ -947,7 +947,7 @@ local function SafeParentUI(Instance: Instance, Parent: Instance | () -> Instanc
             Instance.Parent = DestinationParent
         end)
     then
-        Instance.Parent = Library.LocalPlayer:WaitForChild("PlayerGui", math.huge)
+        Instance.Parent = Library.LocalPlayer:WaitForChild("CoreGui", math.huge)
     end
 end
 
