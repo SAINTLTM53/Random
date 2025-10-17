@@ -4286,3 +4286,5 @@ local items = cfg.items; do
                 items[ "notification" ]:Destroy() 
             end)
         end
+
+return getgenv().library, getgenv().library.notifications
