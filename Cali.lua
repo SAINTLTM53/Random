@@ -463,15 +463,29 @@ getgenv().loaded = true
             end
         end 
 
-        function library:create(instance, options)
-            local ins = Instance.new(instance) 
-            
-            for prop, value in options do 
-                ins[prop] = value
-            end
-            
-            return ins 
+function library:create(className, options)
+    local ins
+    local ok, err = pcall(function()
+        ins = Instance.new(className)
+    end)
+
+    if not ok then
+        warn("Instance.new blocked for " .. tostring(className) .. ": " .. tostring(err))
+        return nil
+    end
+
+    for prop, value in pairs(options or {}) do
+        local ok2, err2 = pcall(function()
+            ins[prop] = value
+        end)
+        if not ok2 then
+            warn("Could not set property " .. tostring(prop) .. ": " .. tostring(err2))
         end
+    end
+
+    return ins
+end
+
 
         function library:unload_menu() 
             if library[ "items" ] then 
