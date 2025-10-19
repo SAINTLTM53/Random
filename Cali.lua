@@ -442,13 +442,20 @@ getgenv().loaded = true
             themes.preset[theme] = color 
         end 
 
-        function library:connection(signal, callback)
-            local connection = signal:Connect(callback)
-            
-            insert(library.connections, connection)
+function library:connection(signal, callback)
+    local connection
+    local ok, err = pcall(function()
+        connection = signal:Connect(callback)
+    end)
 
-            return connection 
-        end
+    if not ok then
+        warn("Failed to connect signal: " .. tostring(err))
+        return nil
+    end
+
+    table.insert(library.connections, connection)
+    return connection
+end
 
         function library:close_element(new_path) 
             local open_element = library.current_open
