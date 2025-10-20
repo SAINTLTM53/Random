@@ -297,42 +297,47 @@ getgenv().loaded = true
             return (y_cond and x_cond)
         end
 
-        function library:draggify(frame)
-            local dragging = false 
-            local start_size = frame.Position
-            local start 
+function library:draggify(frame)
+    local dragging = false
+    local start_size = frame.Position
+    local start
 
-            frame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = true
-                    start = input.Position
-                    start_size = frame.Position
-                end
-            end)
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            start = input.Position
+            start_size = frame.Position
 
-            frame.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            -- Capture the input so it can be tracked in InputChanged
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
                 end
             end)
+        end
+    end)
 
-            library:connection(uis.InputChanged, function(input, game_event) 
-                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    local viewport_x = camera.ViewportSize.X
-                    local viewport_y = camera.ViewportSize.Y
+    -- Optional: fallback for mouse release (PC only)
+    frame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
 
-                    local current_position = dim2(
-                        0,
-                        start_size.X.Offset + (input.Position.X - start.X),
-                        0,
-                        start_size.Y.Offset + (input.Position.Y - start.Y)
-                    )
+    library:connection(uis.InputChanged, function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local current_position = dim2(
+                0,
+                start_size.X.Offset + (input.Position.X - start.X),
+                0,
+                start_size.Y.Offset + (input.Position.Y - start.Y)
+            )
 
-                    library:tween(frame, {Position = current_position}, Enum.EasingStyle.Linear, 0.05)
-                    library:close_element()
-                end
-            end)
-        end 
+            library:tween(frame, {Position = current_position}, Enum.EasingStyle.Linear, 0.05)
+            library:close_element()
+        end
+    end)
+end
 
         function library:convert(str)
             local values = {}
@@ -442,20 +447,13 @@ getgenv().loaded = true
             themes.preset[theme] = color 
         end 
 
-function library:connection(signal, callback)
-    local connection
-    local ok, err = pcall(function()
-        connection = signal:Connect(callback)
-    end)
+        function library:connection(signal, callback)
+            local connection = signal:Connect(callback)
+            
+            insert(library.connections, connection)
 
-    if not ok then
-        warn("Failed to connect signal: " .. tostring(err))
-        return nil
-    end
-
-    table.insert(library.connections, connection)
-    return connection
-end
+            return connection 
+        end
 
         function library:close_element(new_path) 
             local open_element = library.current_open
@@ -470,29 +468,15 @@ end
             end
         end 
 
-function library:create(className, options)
-    local ins
-    local ok, err = pcall(function()
-        ins = Instance.new(className)
-    end)
-
-    if not ok then
-        warn("Instance.new blocked for " .. tostring(className) .. ": " .. tostring(err))
-        return nil
-    end
-
-    for prop, value in pairs(options or {}) do
-        local ok2, err2 = pcall(function()
-            ins[prop] = value
-        end)
-        if not ok2 then
-            warn("Could not set property " .. tostring(prop) .. ": " .. tostring(err2))
+        function library:create(instance, options)
+            local ins = Instance.new(instance) 
+            
+            for prop, value in options do 
+                ins[prop] = value
+            end
+            
+            return ins 
         end
-    end
-
-    return ins
-end
-
 
         function library:unload_menu() 
             if library[ "items" ] then 
@@ -714,7 +698,7 @@ end
                 items[ "game" ] = library:create( "TextLabel" , {
                     FontFace = fonts.font;
                     Parent = items[ "info" ];
-                    TextColor3 = rgb(72, 72, 73);
+                    TextColor3 = rgb(227, 216, 216);
                     BorderColor3 = rgb(0, 0, 0);
                     Text = cfg.game_name;
                     Name = "\0";
@@ -735,7 +719,7 @@ end
                     Name = "\0";
                     TextColor3 = themes.preset.accent;
                     BorderColor3 = rgb(0, 0, 0);
-                    Text = '<font color="rgb(72, 72, 73)">Lifetime, </font>' .. cfg.name .. cfg.suffix;
+                    Text = '<font color="rgb(227, 216, 216)">Lifetime, </font>' .. cfg.name .. cfg.suffix;
                     Size = dim2(1, 0, 0, 0);
                     Position = dim2(0, -10, 0.5, -1);
                     AnchorPoint = vec2(0, 0.5);
@@ -810,24 +794,22 @@ end
             });
 
             local open = true 
-            items[ "close button" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    open = not open 
-
-                    cfg.toggle_menu(open)
-                end 
-            end)
-                
+            items["close button"].InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        open = not open
+        cfg.toggle_menu(open)
+    end
+end)
             return setmetatable(cfg, library)
         end 
 
         function library:tab(properties)
             local cfg = {
                 name = properties.name or properties.Name or "visuals"; 
-                icon = properties.icon or properties.Icon or "http://www.roblox.com/asset/?id=132081281109005";
+                icon = properties.icon or properties.Icon or "http://www.roblox.com/asset/?id=6034767608";
                 
                 -- multi 
-                tabs = properties.tabs or properties.Tabs or {"Main", "Misc.", "Settings"};
+                tabs = properties.tabs or properties.Tabs or {"Main"};
                 pages = {}; -- data store for multi sections
                 current_multi; 
                 
@@ -868,7 +850,7 @@ end
                         BorderColor3 = rgb(0, 0, 0);
                         Parent = items[ "button" ];
                         AnchorPoint = vec2(0, 0.5);
-                        Image = "http://www.roblox.com/asset/?id=132081281109005";
+                        Image = "http://www.roblox.com/asset/?id=6034767608";
                         BackgroundTransparency = 1;
                         Position = dim2(0, 10, 0.5, 0);
                         Name = "\0";
@@ -1471,13 +1453,13 @@ end
                 end 
             end;
 
-            if cfg.fading_toggle then
-                items[ "button" ].InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        cfg.default = not cfg.default 
-                        cfg.toggle_section(cfg.default) 
-                    end 
-                end)
+if cfg.fading_toggle then
+    items["button"].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            cfg.default = not cfg.default 
+            cfg.toggle_section(cfg.default) 
+        end 
+    end)
 
                 function cfg.toggle_section(bool)
                     library:tween(items[ "toggle" ], {BackgroundColor3 = bool and themes.preset.accent or rgb(58, 58, 62)}, Enum.EasingStyle.Quad)
@@ -1723,19 +1705,19 @@ end
                 flags[cfg.flag] = bool
             end 
             
-            items[ "toggle" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    cfg.enabled = not cfg.enabled 
-                    cfg.set(cfg.enabled)
-                end
-            end)
+items["toggle"].InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        cfg.enabled = not cfg.enabled 
+        cfg.set(cfg.enabled)
+    end
+end)
 
-            items[ "toggle_button" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    cfg.enabled = not cfg.enabled 
-                    cfg.set(cfg.enabled)
-                end 
-            end)
+items["toggle_button"].InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        cfg.enabled = not cfg.enabled 
+        cfg.set(cfg.enabled)
+    end 
+end)
             
             if cfg.seperator then -- ok bro my lua either sucks or this was a pain in the ass to make (simple if statement aswell 💔)
                 library:create( "Frame" , {
@@ -2280,12 +2262,12 @@ end
                 end
             end
 
-            items[ "dropdown" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    cfg.open = not cfg.open  
-                    cfg.set_visible(cfg.open)
-                end 
-            end)
+items["dropdown"].InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        cfg.open = not cfg.open  
+        cfg.set_visible(cfg.open)
+    end 
+end)
 
             if cfg.seperator then 
                 library:create( "Frame" , {
@@ -2835,13 +2817,12 @@ end
                 cfg.set()
             end
 
-            items[ "colorpicker" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    cfg.open = not cfg.open 
-
-                    cfg.set_visible(cfg.open)   
-                end          
-            end)
+items["colorpicker"].InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        cfg.open = not cfg.open 
+        cfg.set_visible(cfg.open)   
+    end          
+end)
 
             uis.InputChanged:Connect(function(input)
                 if (dragging_sat or dragging_hue or dragging_alpha) and input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -3220,13 +3201,13 @@ end
                             PaddingLeft = dim(0, 5)
                         });
 
-                        name.InputBegan:Connect(function(input)
-                            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                                cfg.set(option)
-                                cfg.set_visible(false)
-                                cfg.open = false
-                            end 
-                        end)
+name.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        cfg.set(option)
+        cfg.set_visible(false)
+        cfg.open = false
+    end 
+end)
                     end
                 -- 
             end 
@@ -3414,16 +3395,16 @@ end
                 }); library:apply_theme(items[ "name" ], "accent", "BackgroundColor3");                            
             end 
 
-            items[ "button" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    cfg.callback()
+            items["button"].InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        cfg.callback()
 
-                    items[ "name" ].TextColor3 = themes.preset.accent 
-                    library:tween(items[ "name" ], {TextColor3 = rgb(245, 245, 245)})
-                end
-            end)
-            
-            return setmetatable(cfg, library)
+        items["name"].TextColor3 = themes.preset.accent 
+        library:tween(items["name"], {TextColor3 = rgb(245, 245, 245)})
+    end
+end)
+
+return setmetatable(cfg, library)
         end 
 
         function library:settings(options)  
@@ -3517,14 +3498,14 @@ end
                 library:close_element(cfg)
             end
             
-            items[ "tick" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    cfg.open = not cfg.open
-                    cfg.set_visible(cfg.open)
-                end 
-            end)
+items["tick"].InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        cfg.open = not cfg.open
+        cfg.set_visible(cfg.open)
+    end 
+end)
 
-            return setmetatable(cfg, library)
+return setmetatable(cfg, library)
         end 
 
         function library:list(properties) 
@@ -3604,20 +3585,20 @@ end
                         CornerRadius = dim(0, 3)
                     });     
 
-                    button.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                            local current = cfg.current_element 
+button.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        local current = cfg.current_element 
 
-                            if current and current ~= name then 
-                                library:tween(current, {TextColor3 = rgb(72, 72, 72)})
-                            end
-                            
-                            flags[cfg.flag] = option_data
-                            cfg.callback(option_data)
-                            library:tween(name, {TextColor3 = rgb(245, 245, 245)})
-                            cfg.current_element = name
-                        end 
-                    end)
+        if current and current ~= name then 
+            library:tween(current, {TextColor3 = rgb(72, 72, 72)})
+        end
+        
+        flags[cfg.flag] = option_data
+        cfg.callback(option_data)
+        library:tween(name, {TextColor3 = rgb(245, 245, 245)})
+        cfg.current_element = name
+    end 
+end)
 
                     name.MouseEnter:Connect(function()
                         if cfg.current_element == name then 
@@ -3868,10 +3849,7 @@ end
             MaxPlayers = val
         end
     })
-
 end
-
-
     --
 
     -- Notification Library
@@ -3923,18 +3901,18 @@ local isMobile = UserInputService.TouchEnabled
 
 local notificationSize = isMobile and dim2(0, 210, 0, 53) or dim2(0, 260, 0, 75)
 
-local items = cfg.items; do 
-    items["notification"] = library:create("Frame", {
-        Parent = library["items"],
-        Size = notificationSize,
-        Name = "\0",
-        BorderColor3 = rgb(0, 0, 0),
-        BorderSizePixel = 0,
-        BackgroundTransparency = 1,
-        AnchorPoint = vec2(1, 0),
-        AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundColor3 = rgb(14, 14, 16)
-    });
+            local items = cfg.items; do 
+                items[ "notification" ] = library:create( "Frame" , {
+                    Parent = library[ "items" ];
+                    Size = notificationSize,
+                    Name = "\0";
+                    BorderColor3 = rgb(0, 0, 0);
+                    BorderSizePixel = 0;
+                    BackgroundTransparency = 1;
+                    AnchorPoint = vec2(1, 0);
+                    AutomaticSize = Enum.AutomaticSize.Y;
+                    BackgroundColor3 = rgb(14, 14, 16)
+                });
 
                 library:create( "UIScale" , {
                     Parent = items[ "notification" ];
@@ -3950,16 +3928,16 @@ local items = cfg.items; do
                 
                 items[ "title" ] = library:create( "TextLabel" , {
                     FontFace = fonts.font;
-                    TextColor3 = rgb(255, 111, 0);
+                    TextColor3 = rgb(255, 255, 255);
                     BorderColor3 = rgb(0, 0, 0);
                     Text = cfg.name;
                     Parent = items[ "notification" ];
                     Name = "\0";
                     BackgroundTransparency = 1;
-                    Position = dim2(0, 7, 0, 2);
+                    Position = dim2(0, 7, 0, 6);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 20;
+                    TextSize = 14;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -3975,13 +3953,13 @@ local items = cfg.items; do
                     Text = cfg.info;
                     Parent = items[ "notification" ];
                     Name = "\0";
-                    Position = dim2(0, 9, 0, 27);
+                    Position = dim2(0, 9, 0, 22);
                     BorderSizePixel = 0;
                     BackgroundTransparency = 1;
                     TextXAlignment = Enum.TextXAlignment.Left;
                     TextWrapped = true;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 20;
+                    TextSize = 14;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
