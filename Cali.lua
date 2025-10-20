@@ -3937,7 +3937,7 @@ local notificationSize = isMobile and dim2(0, 210, 0, 53) or dim2(0, 260, 0, 75)
                     Position = dim2(0, 7, 0, 6);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 14;
+                    TextSize = 20;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -3959,7 +3959,7 @@ local notificationSize = isMobile and dim2(0, 210, 0, 53) or dim2(0, 260, 0, 75)
                     TextXAlignment = Enum.TextXAlignment.Left;
                     TextWrapped = true;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 14;
+                    TextSize = 18;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
