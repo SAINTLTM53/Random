@@ -468,15 +468,25 @@ end
             end
         end 
 
-        function library:create(instance, options)
-            local ins = Instance.new(instance) 
-            
-            for prop, value in options do 
-                ins[prop] = value
-            end
-            
-            return ins 
-        end
+function library:create(instanceType, options)
+	local success, inst = pcall(Instance.new, instanceType)
+	if not success or typeof(inst) ~= "Instance" then
+		warn("[library:create] Failed to create instance of type:", instanceType)
+		return nil
+	end
+
+	for prop, value in pairs(options or {}) do
+		local ok, err = pcall(function()
+			inst[prop] = value
+		end)
+		if not ok then
+			warn(string.format("[library:create] Failed to set property '%s': %s", tostring(prop), tostring(err)))
+		end
+	end
+
+	return inst
+end
+
 
         function library:unload_menu() 
             if library[ "items" ] then 
@@ -1133,37 +1143,45 @@ end)
             return unpack(cfg.pages)
         end
 
-        function library:seperator(properties)
-            local cfg = {items = {}, name = properties.Name or properties.name or "General"}
+function library:seperator(properties)
+	local cfg = {
+		items = {},
+		name = properties.Name or properties.name or "General"
+	}
 
-            local items = cfg.items do 
-                items[ "name" ] = library:create( "TextLabel" , {
-                    FontFace = fonts.font;
-                    TextColor3 = rgb(72, 72, 73);
-                    BorderColor3 = rgb(0, 0, 0);
-                    Text = cfg.name;
-                    Parent = self.items[ "button_holder" ];
-                    Name = "\0";
-                    Size = dim2(1, 0, 0, 0);
-                    Position = dim2(0, 40, 0, 0);
-                    BackgroundTransparency = 1;
-                    TextXAlignment = Enum.TextXAlignment.Left;
-                    BorderSizePixel = 0; 
-                    AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 16;
-                    BackgroundColor3 = rgb(255, 255, 255)
-                });
-                
-                library:create( "UIPadding" , {
-                    Parent = items[ "name" ];
-                    PaddingRight = dim(0, 5);
-                    PaddingLeft = dim(0, 5)
-                });                
-            end;    
+	local items = cfg.items
+	local parent = self.items and self.items["button_holder"]
 
-            return setmetatable(cfg, library)
-        end 
+	if not parent then
+		warn("[library:seperator] 'button_holder' not found in self.items")
+		return cfg
+	end
 
+	items["name"] = self:create("TextLabel", {
+		FontFace = fonts and fonts.font or Enum.Font.Legacy,
+		TextColor3 = Color3.fromRGB(72, 72, 73),
+		BorderColor3 = Color3.fromRGB(0, 0, 0),
+		Text = cfg.name,
+		Parent = parent,
+		Name = "\0",
+		Size = UDim2.new(1, 0, 0, 0),
+		Position = UDim2.new(0, 40, 0, 0),
+		BackgroundTransparency = 1,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		BorderSizePixel = 0,
+		AutomaticSize = Enum.AutomaticSize.XY,
+		TextSize = 16,
+		BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	})
+
+	self:create("UIPadding", {
+		Parent = items["name"],
+		PaddingRight = UDim.new(0, 5),
+		PaddingLeft = UDim.new(0, 5)
+	})
+
+	return setmetatable(cfg, library)
+end
         -- Miscellaneous 
             function library:column(properties) 
                 local cfg = {items = {}, size = properties.size or 1}
