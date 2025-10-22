@@ -475,7 +475,13 @@ function library:create(instanceType, options)
 		return nil
 	end
 
+	local parentToSet = nil
 	for prop, value in pairs(options or {}) do
+		if prop == "Parent" then
+			parentToSet = value
+			continue
+		end
+
 		local ok, err = pcall(function()
 			inst[prop] = value
 		end)
@@ -484,8 +490,18 @@ function library:create(instanceType, options)
 		end
 	end
 
+	if parentToSet then
+		local ok, err = pcall(function()
+			inst.Parent = parentToSet
+		end)
+		if not ok then
+			warn(string.format("[library:create] Failed to set property 'Parent': %s", tostring(err)))
+		end
+	end
+
 	return inst
 end
+
 
 
         function library:unload_menu() 
