@@ -1090,58 +1090,74 @@ end)
                 --
             end 
 
-            function cfg.open_tab() 
-                local selected_tab = self.selected_tab
-                
-                if selected_tab then 
-                    if selected_tab[ 4 ] ~= items[ "tab_holder" ] then 
-                        self.items[ "global_fade" ].BackgroundTransparency = 0
-                        
-                        library:tween(self.items[ "global_fade" ], {BackgroundTransparency = 1}, Enum.EasingStyle.Quad, 0.4)
-                        selected_tab[ 4 ].Size = dim2(1, -216, 1, -101)
-                    end
+function cfg.open_tab(skipTween)
+	local selected_tab = self.selected_tab
+	local items = cfg.items
 
-                    library:tween(selected_tab[ 1 ], {BackgroundTransparency = 1})
-                    library:tween(selected_tab[ 2 ], {ImageColor3 = rgb(72, 72, 73)})
-                    library:tween(selected_tab[ 3 ], {TextColor3 = rgb(72, 72, 73)})
+	if selected_tab then
+		if selected_tab[4] ~= items["tab_holder"] then
+			if self.items["global_fade"] then
+				self.items["global_fade"].BackgroundTransparency = 0
+				if not skipTween then
+					library:tween(self.items["global_fade"], { BackgroundTransparency = 1 }, Enum.EasingStyle.Quad, 0.4)
+				end
+			end
 
-                    selected_tab[ 4 ].Visible = false
-                    selected_tab[ 4 ].Parent = library[ "cache" ]
-                    selected_tab[ 5 ].Visible = false
-                    selected_tab[ 5 ].Parent = library[ "cache" ]
-                end
+			selected_tab[4].Size = dim2(1, -216, 1, -101)
+		end
 
-                library:tween(items[ "button" ], {BackgroundTransparency = 0})
-                library:tween(items[ "icon" ], {ImageColor3 = themes.preset.accent})
-                library:tween(items[ "name" ], {TextColor3 = rgb(255, 255, 255)})
-                library:tween(items[ "tab_holder" ], {Size = dim2(1, -196, 1, -81)}, Enum.EasingStyle.Quad, 0.4)
-                
-                items[ "tab_holder" ].Visible = true 
-                items[ "tab_holder" ].Parent = self.items[ "main" ]
-                items[ "multi_section_button_holder" ].Visible = true 
-                items[ "multi_section_button_holder" ].Parent = self.items[ "multi_holder" ]
+		library:tween(selected_tab[1], { BackgroundTransparency = 1 })
+		library:tween(selected_tab[2], { ImageColor3 = rgb(72, 72, 73) })
+		library:tween(selected_tab[3], { TextColor3 = rgb(72, 72, 73) })
 
-                self.selected_tab = {
-                    items[ "button" ];
-                    items[ "icon" ];
-                    items[ "name" ];
-                    items[ "tab_holder" ];
-                    items[ "multi_section_button_holder" ];
-                }
+		selected_tab[4].Visible = false
+		selected_tab[4].Parent = library["cache"]
 
-                library:close_element()
-            end
+		selected_tab[5].Visible = false
+		selected_tab[5].Parent = library["cache"]
+	end
 
-            items[ "button" ].MouseButton1Down:Connect(function()
-                cfg.open_tab()
-            end)
-            
-            if not self.selected_tab then 
-                cfg.open_tab(true) 
-            end
+	library:tween(items["button"], { BackgroundTransparency = 0 })
+	library:tween(items["icon"], { ImageColor3 = themes.preset.accent })
+	library:tween(items["name"], { TextColor3 = rgb(255, 255, 255) })
 
-            return unpack(cfg.pages)
-        end
+	if not skipTween then
+		library:tween(items["tab_holder"], { Size = dim2(1, -196, 1, -81) }, Enum.EasingStyle.Quad, 0.4)
+	end
+
+	items["tab_holder"].Visible = true
+	items["tab_holder"].Parent = self.items["main"]
+
+	items["multi_section_button_holder"].Visible = true
+	items["multi_section_button_holder"].Parent = self.items["multi_holder"]
+
+	self.selected_tab = {
+		items["button"],
+		items["icon"],
+		items["name"],
+		items["tab_holder"],
+		items["multi_section_button_holder"]
+	}
+
+	library:close_element()
+end
+
+-- Safe connection
+if items["button"] then
+	items["button"].MouseButton1Down:Connect(function()
+		cfg.open_tab()
+	end)
+end
+
+-- Only open once on init
+if not self.selected_tab then
+	task.defer(function()
+		cfg.open_tab(true) -- safe to pass optional param now
+	end)
+end
+
+return unpack(cfg.pages)
+end
 
 function library:seperator(properties)
 	local cfg = {
