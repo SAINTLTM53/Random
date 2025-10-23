@@ -3795,40 +3795,6 @@ function library:init_config(window)
         end
     })
 
-_G.TeleportMethod = "Instant"
-
-local function waitForACGreenLight()
-    local char = game.Players.LocalPlayer.Character
-    local deadline = tick() + 5
-    repeat
-        if not char then break end
-        local attr = char:GetAttribute("LastACPos")
-        if not attr or attr == "" or (typeof(attr) == "Vector3" and attr.Magnitude < 0.1) then
-            break
-        end
-        task.wait(0.1)
-    until tick() > deadline
-end
-
-local function instantTeleportTo(cframeTarget)
-    local char = game.Players.LocalPlayer.Character
-    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not (humanoid and hrp) then return end
-
-    waitForACGreenLight()
-    humanoid:ChangeState(Enum.HumanoidStateType.FallingDown)
-    task.wait(1)
-    hrp.CFrame = typeof(cframeTarget) == "Vector3" and CFrame.new(cframeTarget) or cframeTarget
-    task.wait(1)
-    humanoid:ChangeState(Enum.HumanoidStateType.Running)
-end
-
-_G.teleportTo = function(cframeTarget)
-    instantTeleportTo(cframeTarget)
-end
-
-
     local serverSection = right:section({
         name = "Server",
         size = 1,
