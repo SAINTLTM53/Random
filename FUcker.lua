@@ -5154,61 +5154,55 @@ function Library:CreateWindow(WindowInfo)
                     Size = UDim2.new(1, 0, 0, 1),
                 })
 
-local BoxIcon = Library:GetIcon(Info.IconName)
-if BoxIcon then
-    local IconImage = New("ImageLabel", {
-        Image = BoxIcon.Url,
-        ImageColor3 = "AccentColor",
-        ImageRectOffset = BoxIcon.ImageRectOffset,
-        ImageRectSize = BoxIcon.ImageRectSize,
-        Position = UDim2.fromOffset(6, 6),
-        Size = UDim2.fromOffset(22, 22),
-        BackgroundTransparency = 1,
-        Parent = GroupboxHolder,
-    })
-end
+                local BoxIcon = Library:GetIcon(Info.IconName)
+                if BoxIcon then
+                    New("ImageLabel", {
+                        Image = BoxIcon.Url,
+                        ImageColor3 = "AccentColor",
+                        ImageRectOffset = BoxIcon.ImageRectOffset,
+                        ImageRectSize = BoxIcon.ImageRectSize,
+                        Position = UDim2.fromOffset(6, 6),
+                        Size = UDim2.fromOffset(22, 22),
+                        Parent = GroupboxHolder,
+                    })
+                end
 
-New("UICorner", {
-    CornerRadius = UDim.new(0, 12), 
-    Parent = GroupboxHolder,
-})
+                GroupboxLabel = New("TextLabel", {
+                    BackgroundTransparency = 1,
+                    Position = UDim2.fromOffset(BoxIcon and 24 or 0, 0),
+                    Size = UDim2.new(1, 0, 0, 34),
+                    Text = Info.Name,
+                    TextSize = 15,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = GroupboxHolder,
+                })
+                New("UIPadding", {
+                    PaddingLeft = UDim.new(0, 12),
+                    PaddingRight = UDim.new(0, 12),
+                    Parent = GroupboxLabel,
+                })
 
-GroupboxLabel = New("TextLabel", {
-    BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(BoxIcon and 24 or 0, 0),
-    Size = UDim2.new(1, 0, 0, 34),
-    Text = Info.Name,
-    TextSize = 15,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    Parent = GroupboxHolder,
-})
+                GroupboxContainer = New("Frame", {
+                    BackgroundTransparency = 1,
+                    Position = UDim2.fromOffset(0, 35),
+                    Size = UDim2.new(1, 0, 1, -35),
+                    Parent = GroupboxHolder,
+                })
 
-New("UIPadding", {
-    PaddingLeft = UDim.new(0, 12),
-    PaddingRight = UDim.new(0, 12),
-    Parent = GroupboxLabel,
-})
+                GroupboxList = New("UIListLayout", {
+                    Padding = UDim.new(0, 8),
+                    Parent = GroupboxContainer,
+                })
+                New("UIPadding", {
+                    PaddingBottom = UDim.new(0, 7),
+                    PaddingLeft = UDim.new(0, 7),
+                    PaddingRight = UDim.new(0, 7),
+                    PaddingTop = UDim.new(0, 7),
+                    Parent = GroupboxContainer,
+                })
+            end
 
-GroupboxContainer = New("Frame", {
-    BackgroundTransparency = 1,
-    Position = UDim2.fromOffset(0, 35),
-    Size = UDim2.new(1, 0, 1, -35),
-    Parent = GroupboxHolder,
-})
-
-GroupboxList = New("UIListLayout", {
-    Padding = UDim.new(0, 8),
-    Parent = GroupboxContainer,
-})
-
-New("UIPadding", {
-    PaddingBottom = UDim.new(0, 7),
-    PaddingLeft = UDim.new(0, 7),
-    PaddingRight = UDim.new(0, 7),
-    PaddingTop = UDim.new(0, 7),
-    Parent = GroupboxContainer,
-})
-        local Groupbox = {
+            local Groupbox = {
                 BoxHolder = BoxHolder,
                 Holder = Background,
                 Container = GroupboxContainer,
