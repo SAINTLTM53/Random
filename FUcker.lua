@@ -1038,21 +1038,18 @@ do
         Size = UDim2.new(0, 300, 1, -6),
         Parent = ScreenGui,
     })
+
+    -- Rounded corners
+    New("UICorner", {
+        CornerRadius = UDim.new(0, 12), -- adjust radius here
+        Parent = NotificationArea,
+    })
+
     NotificationList = New("UIListLayout", {
         HorizontalAlignment = Enum.HorizontalAlignment.Right,
         Padding = UDim.new(0, 6),
         Parent = NotificationArea,
     })
-end
-
---// Lib Functions \\--
-function Library:GetBetterColor(Color: Color3, Add: number): Color3
-    Add = Add * (Library.IsLightTheme and -4 or 2)
-    return Color3.fromRGB(
-        math.clamp(Color.R * 255 + Add, 0, 255),
-        math.clamp(Color.G * 255 + Add, 0, 255),
-        math.clamp(Color.B * 255 + Add, 0, 255)
-    )
 end
 
 function Library:GetDarkerColor(Color: Color3): Color3
@@ -1414,6 +1411,14 @@ function Library:AddContextMenu(
             },
         })
     end
+
+    New("UICorner", {
+        CornerRadius = UDim.new(0, 10),
+        Parent = Menu,
+    })
+
+    return Menu
+end
 
     local Table = {
         Active = false,
